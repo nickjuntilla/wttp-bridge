@@ -2,8 +2,15 @@
 
 export function parseWttpUrl(url) {
   try {
+    // console.log("Parsing wttp link:", url);
     // If url includes wttp://, remove it
     let wttpUrl = url.startsWith("wttp://") ? url.split("wttp://")[1] : url;
+
+    // Remove any parameters from the end of the url
+    wttpUrl = wttpUrl.split("?")[0];
+
+    // Remove trailing backslash
+    wttpUrl = wttpUrl.endsWith("/") ? wttpUrl.slice(0, -1) : wttpUrl;
 
     // if _url starts with /wttp/, remove it
     wttpUrl = wttpUrl.startsWith("/wttp/")
@@ -13,7 +20,7 @@ export function parseWttpUrl(url) {
     // Parse out whatever is between the wttp:// and the first /
     let chain = "";
     let path = "/";
-    let address = url;
+    let address = wttpUrl;
 
     // Check if there is a forward slash
     if (wttpUrl.includes("/")) {

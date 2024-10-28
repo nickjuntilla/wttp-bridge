@@ -15,7 +15,7 @@ export async function handleWTTPURL() {
 
   if (process.env.SINGLE_CONTRACT) {
     // Get the url path and add it to the contrct address
-    wttpUrl = `${process.env.SINGLE_CONTRACT}${window.location.pathname}`;
+    wttpUrl = `${process.env.SINGLE_CONTRACT}${wttpUrl}`;
   } else {
     // /wttp/ prefix is in the style of /ipfs/ gateways
     // remove /wttp/ if it exists

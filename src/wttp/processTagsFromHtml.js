@@ -11,6 +11,7 @@ export async function processStyleSheets(fullContent) {
       const link = styleSheet.match(/href="([^"]+)"/);
       if (link) {
         const href = link[1];
+        const styleTag = document.createElement("style");
         if (href.startsWith("wttp://")) {
           const { address, chain, path } = parseWttpUrl(href);
           const rpcUrl = getRpcUrl(chain);
@@ -19,10 +20,10 @@ export async function processStyleSheets(fullContent) {
 
           // Style sheets linked without the .css extension don't work
           // so we need to add the contents in a style tag
-          const styleTag = document.createElement("style");
-          if (contentLink && contentLink.startsWith("http")) {
+
+          if (contentLink) {
             // Fetch the content from IPFS using a gateway
-            const ipfsResponse = await fetch(contentLink);
+            const ipfsResponse = await fetch(parseIpfsLink(contentLink));
 
             // Check if the response is okay
             if (!ipfsResponse.ok) {
@@ -42,8 +43,6 @@ export async function processStyleSheets(fullContent) {
           } else {
             styleTag.innerHTML = content;
           }
-
-          // TODO: Handle non-http IPFS contentLinks
 
           document.head.appendChild(styleTag);
           // Delete found link tag from fullContent
@@ -70,13 +69,13 @@ export async function processScripts(fullContent) {
             await fetchContractResource(address, path, rpcUrl);
           // console.log(
           //   "This is a script tag with a wttp link and with content",
-          //   scriptSrc,
-          //   content
+          //   path,
+          //   content,
+          //   contentLink
           // );
           const scriptTag = document.createElement("script");
-          if (contentLink && contentLink.startsWith("http")) {
-            scriptTag.src = contentLink;
-            // TODO: handle pure non-http IPFS contentLinks
+          if (contentLink) {
+            scriptTag.src = parseIpfsLink(contentLink);
           } else {
             scriptTag.innerHTML = content;
           }
@@ -119,9 +118,8 @@ export async function processImages(bodyContent) {
           const imageTag = document.createElement("img");
 
           // if contentLink exists set the image src to the contentLink
-          if (contentLink && contentLink.startsWith("http")) {
-            imageTag.src = contentLink;
-            // TODO: handle pure non-http IPFS contentLinks
+          if (contentLink) {
+            imageTag.src = parseIpfsLink(contentLink);
           } else {
             // convert content to base64 dataUrl for image tag
             const dataUrl = `data:image/png;base64,${content}`;
@@ -146,4 +144,19 @@ export async function processImages(bodyContent) {
     document.body.innerHTML = bodyContent;
   }
   return bodyContent;
+}
+
+function parseIpfsLink(link) {
+  // if link has /ipfs/ in it then get everrything after /ipfs/
+  // and add https://ipfs.io/ipfs/ to the front
+  if (link.includes("/ipfs/")) {
+    return `https://ipfs.io/ipfs/${link.split("/ipfs/")[1]}`;
+  }
+
+  // if link starts with ipfs:// then remove it and add https://ipfs.io/ipfs/
+  if (link.startsWith("ipfs://")) {
+    return `https://ipfs.io/ipfs/${link.split("ipfs://")[1]}`;
+  }
+
+  return link;
 }
