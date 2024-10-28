@@ -34,7 +34,7 @@ export async function processStyleSheets(fullContent) {
             // Read the response as a Blob for binary data
             const ipfsBlob = await ipfsResponse.blob();
 
-            console.log("is blob", ipfsBlob);
+            // console.log("Blob is: ", ipfsBlob);
 
             let _content = await ipfsBlob.text();
 
@@ -68,11 +68,11 @@ export async function processScripts(fullContent) {
           const rpcUrl = getRpcUrl(chain);
           const { content, contentType, contentLink } =
             await fetchContractResource(address, path, rpcUrl);
-          console.log(
-            "This is a script tag with a wttp link and with content",
-            scriptSrc,
-            content
-          );
+          // console.log(
+          //   "This is a script tag with a wttp link and with content",
+          //   scriptSrc,
+          //   content
+          // );
           const scriptTag = document.createElement("script");
           if (contentLink && contentLink.startsWith("http")) {
             scriptTag.src = contentLink;
@@ -111,11 +111,11 @@ export async function processImages(bodyContent) {
           const rpcUrl = getRpcUrl(chain);
           const { content, contentType, contentLink } =
             await fetchContractResource(address, path, rpcUrl);
-          console.log(
-            "This is an image tag with a wttp link and with content",
-            imageSrc,
-            content
-          );
+          // console.log(
+          //   "This is an image tag with a wttp link and with content",
+          //   imageSrc,
+          //   content
+          // );
           const imageTag = document.createElement("img");
 
           // if contentLink exists set the image src to the contentLink

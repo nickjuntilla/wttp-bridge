@@ -31,8 +31,6 @@ export async function handleWTTPURL() {
     path,
     rpcUrl
   );
-  console.log("Debug: Resource:", content);
-  console.log("Debug: Resource type:", contentType);
 
   fullContent = content;
 

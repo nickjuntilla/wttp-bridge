@@ -1,7 +1,6 @@
 // parseWttpUrl.js
 
 export function parseWttpUrl(url) {
-  console.log("Received web3 request:", url);
   try {
     // If url includes wttp://, remove it
     let wttpUrl = url.startsWith("wttp://") ? url.split("wttp://")[1] : url;
@@ -31,7 +30,7 @@ export function parseWttpUrl(url) {
       chain = chain.split(":")[1].split("/")[0];
     }
 
-    console.log("Parsed wttp link:", { chain, path, address });
+    // console.log("Parsed wttp link:", { chain, path, address });
 
     return { address, chain, path };
   } catch (error) {
