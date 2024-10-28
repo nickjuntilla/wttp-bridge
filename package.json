@@ -1,0 +1,27 @@
+{
+  "name": "wttp-gateway",
+  "version": "1.0.0",
+  "description": "http gateway for wttp",
+  "main": "index.js",
+  "author": "@nickjunes",
+  "scripts": {
+    "build": "webpack --mode production",
+    "watch": "webpack --watch",
+    "start": "webpack-dev-server"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "babel-loader": "^8.0.0",
+    "copy-webpack-plugin": "^10.0.0",
+    "dotenv": "^16.4.5",
+    "dotenv-webpack": "^8.1.0",
+    "ethers": "^6.13.4",
+    "html-webpack-plugin": "^5.6.3",
+    "http-server": "^14.1.1",
+    "webpack": "^5.0.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.1.0"
+  }
+}
