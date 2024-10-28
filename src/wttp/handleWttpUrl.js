@@ -10,11 +10,19 @@ import {
 
 export async function handleWTTPURL() {
   // Get the current URL
-  let url = window.location.href;
-
+  let wttpUrl = window.location.pathname;
   let fullContent = "";
 
-  let wttpUrl = url.split("/wttp/")[1];
+  if (process.env.SINGLE_CONTRACT) {
+    // Get the url path and add it to the contrct address
+    wttpUrl = `${process.env.SINGLE_CONTRACT}${window.location.pathname}`;
+  } else {
+    // /wttp/ prefix is in the style of /ipfs/ gateways
+    // remove /wttp/ if it exists
+    wttpUrl = wttpUrl.startsWith("/wttp/")
+      ? wttpUrl.split("/wttp/")[1]
+      : wttpUrl;
+  }
 
   const { address, chain, path } = parseWttpUrl(wttpUrl);
 
