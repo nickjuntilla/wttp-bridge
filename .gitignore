@@ -21,6 +21,9 @@ firebase.json
 firebase-debug.log
 .firebaserc
 
+# Mac files
+.DS_Store
+
 # Yarn
 yarn.lock
 
