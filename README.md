@@ -6,6 +6,7 @@ The server must be configured to send all requests back to index.html like a sin
 ## To run
 
 `yarn` or `npm install`
+
 `yarn run start`
 
 ## Deploy
