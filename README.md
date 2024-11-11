@@ -19,9 +19,9 @@ To serve a single domain route a domain to a single contract address.
 
 ### Examples
 
-http://localhost:5000/wttp/0x9C29F0eE3D59dFea70D616f4776F7649dA364342
-http://localhost:5000/wttp/0x61ba60374e0CF9a51aD846853b08B09FC163896a
-http://localhost:5000/wttp/0xaD7A50341F4Cc6C792fAc35D3e6A67eA1750EDBc
+- http://localhost:5000/wttp/0x9C29F0eE3D59dFea70D616f4776F7649dA364342
+- http://localhost:5000/wttp/0x61ba60374e0CF9a51aD846853b08B09FC163896a
+- http://localhost:5000/wttp/0xaD7A50341F4Cc6C792fAc35D3e6A67eA1750EDBc
 
 ## To serve a single web2 domain
 
