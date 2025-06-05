@@ -10,6 +10,9 @@ export function getRpcUrl(chain) {
     case "137":
       rpcUrl = process.env.POLYGON_RPC_URL;
       break;
+    case "101010":
+      rpcUrl = process.env.STABILITY_RPC_URL;
+      break
     default:
       rpcUrl = process.env.POLYGON_RPC_URL;
   }
