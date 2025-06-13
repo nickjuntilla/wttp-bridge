@@ -14,7 +14,7 @@ export async function handleWTTPURL() {
   let fullContent = "";
 
   if (process.env.SINGLE_CONTRACT) {
-    // Get the url path and add it to the contrct address
+    // Get the url path and add it to the contract address
     wttpUrl = `${process.env.SINGLE_CONTRACT}${wttpUrl}`;
   } else {
     // /wttp/ prefix is in the style of /ipfs/ gateways
