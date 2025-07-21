@@ -2,7 +2,7 @@
 
 export function parseWttpUrl(url) {
   try {
-    // console.log("Parsing wttp link:", url);
+    console.log("Parsing wttp link:", url);
     // If url includes wttp://, remove it
     let wttpUrl = url.startsWith("wttp://") ? url.split("wttp://")[1] : url;
 
@@ -34,10 +34,15 @@ export function parseWttpUrl(url) {
     if (wttpUrl.includes(":")) {
       address = wttpUrl.split(":")[0];
 
-      chain = chain.split(":")[1].split("/")[0];
+      chain = wttpUrl.split(":")[1].split("/")[0];
     }
 
-    // console.log("Parsed wttp link:", { chain, path, address });
+    // Default chain to 137 if none is provided
+    if (!chain) {
+      chain = "137";
+    }
+
+    console.log("Parsed wttp link:", { chain, path, address });
 
     return { address, chain, path };
   } catch (error) {

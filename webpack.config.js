@@ -13,6 +13,23 @@ module.exports = {
     path: path.resolve(__dirname, "dist"), // Output directory is 'dist'
     publicPath: "/", // Serve files from the root directory
   },
+  resolve: {
+    fallback: {
+      fs: false,
+      path: require.resolve("path-browserify"),
+      crypto: require.resolve("crypto-browserify"),
+      stream: require.resolve("stream-browserify"),
+      buffer: require.resolve("buffer"),
+      util: require.resolve("util"),
+      os: require.resolve("os-browserify/browser"),
+      url: require.resolve("url"),
+      zlib: require.resolve("browserify-zlib"),
+      http: require.resolve("stream-http"),
+      https: require.resolve("https-browserify"),
+      assert: require.resolve("assert"),
+      querystring: require.resolve("querystring-es3"),
+    },
+  },
   plugins: [
     new Dotenv(), // Load environment variables from .env file
     new HtmlWebpackPlugin({
@@ -24,6 +41,10 @@ module.exports = {
     open: true, // Open the browser on start
     hot: true, // Enable Hot Module Replacement
     historyApiFallback: true, // Support client-side routing (e.g., React Router)
+    headers: {
+      "Content-Security-Policy":
+        "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: *; connect-src *; script-src 'self' 'unsafe-inline' 'unsafe-eval' *; style-src 'self' 'unsafe-inline' *; img-src 'self' data: blob: *;",
+    },
   },
   module: {
     rules: [
