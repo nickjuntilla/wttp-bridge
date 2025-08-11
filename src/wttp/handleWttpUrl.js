@@ -1,5 +1,5 @@
 // handleWttpUrl.js
-import { WTTPHandler } from "@wttp/handler";
+import { fetchWTTPResource, decodeContent } from "../utils/wttpFetch.js";
 import { parseWttpUrl } from "./parseWttpUrl.js";
 import {
   processStyleSheets,
@@ -11,12 +11,13 @@ export async function handleWTTPURL() {
   // Get the current URL
   let wttpUrl = window.location.pathname;
   let fullContent = "";
+  console.log("handleWTTPURL");
 
   if (process.env.SINGLE_CONTRACT) {
     // Get the url path and add it to the contract address
     wttpUrl = `${process.env.SINGLE_CONTRACT}${wttpUrl}`;
   } else {
-    // /wttp/ prefix is in the style of /ipfs/ gateways
+    // /wttp/ prefix allows gateway-style URLs
     // remove /wttp/ if it exists
     wttpUrl = wttpUrl.startsWith("/wttp/")
       ? wttpUrl.split("/wttp/")[1]
@@ -29,26 +30,57 @@ export async function handleWTTPURL() {
   console.log("Debug: Chain:", chain);
   console.log("Debug: Path:", path);
 
-  // Create WTTP handler instance with the selected network's chain ID
-  const wttp = new WTTPHandler(undefined, chain);
+  console.log(
+    "Fetching from WTTP site:",
+    address,
+    "path:",
+    path,
+    "chain:",
+    chain
+  );
 
-  // Fetch content from the WTTP site
-  const url = `wttp://${address}${path}`;
+  try {
+    const result = await fetchWTTPResource({
+      siteAddress: address,
+      path: path,
+      network: chain,
+    });
 
-  const response = await wttp.fetch(url);
+    if (
+      result.response.head.status === 200n ||
+      result.response.head.status === 206n
+    ) {
+      // Get the content type from metadata
+      const mimeType = result.response.head.metadata.properties.mimeType;
+      console.log("MIME type is::", mimeType);
 
-  if (response.ok) {
-    // Get the content type from headers
-    const contentType = response.headers.get("Content-Type") || "";
-    console.log("contentType is:: ", contentType);
+      if (result.content) {
+        // Decode content based on MIME type
+        const content = decodeContent(result.content, mimeType);
+        // console.log(
+        //   "content is::",
+        //   typeof content === "string"
+        //     ? content
+        //     : `[Binary data: ${result.content.length} bytes]`
+        // );
 
-    // Use the Response.text() method to get the body as text
-    const content = await response.text();
-    console.log("content is:: ", content);
-
-    fullContent = content;
-  } else {
-    console.error(`Error: ${response.status} - ${response.statusText}`);
+        // If content is binary, convert to base64 for now to maintain compatibility
+        fullContent =
+          typeof content === "string"
+            ? content
+            : btoa(String.fromCharCode(...result.content));
+      } else {
+        console.error("No content received from WTTP resource");
+        return;
+      }
+    } else {
+      console.error(
+        `Error: ${result.response.head.status} - Resource not found or error`
+      );
+      return;
+    }
+  } catch (error) {
+    console.error("Failed to fetch WTTP resource:", error);
     return;
   }
 
@@ -111,17 +143,18 @@ export async function handleWTTPURL() {
   //console.log("Processing scripts...");
   // fullContent = await processScripts(fullContent);
 
-  setTimeout(() => {
-    console.log("Processing scripts...");
-    processScripts(fullContent);
-  }, 2000);
-
   // // Process images after DOM update
   setTimeout(async () => {
     // Stringify the document body
     await processImages(fullContent);
     document.body.style.opacity = 100;
   }, 100);
+
+  // Gives some time for the new dom an style sheets to load
+  setTimeout(() => {
+    console.log("Processing scripts...");
+    processScripts(fullContent);
+  }, 2000);
 }
 
 function extractNonStylesheetTags(content, regex) {

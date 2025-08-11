@@ -41,9 +41,13 @@ module.exports = {
     open: true, // Open the browser on start
     hot: true, // Enable Hot Module Replacement
     historyApiFallback: true, // Support client-side routing (e.g., React Router)
+    // Fully permissive headers for WTTP gateway - all sources trusted
     headers: {
       "Content-Security-Policy":
-        "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: *; connect-src *; script-src 'self' 'unsafe-inline' 'unsafe-eval' *; style-src 'self' 'unsafe-inline' *; img-src 'self' data: blob: *;",
+        "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; style-src * 'unsafe-inline' data:; img-src * data: blob:; font-src * data:; media-src * data: blob:; object-src *; frame-src *; worker-src * blob: data:; child-src * blob: data:;",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "*",
+      "Access-Control-Allow-Headers": "*",
     },
   },
   module: {

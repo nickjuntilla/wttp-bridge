@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <!-- Fully permissive CSP for WTTP gateway - all sources trusted -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: *; connect-src *; script-src 'self' 'unsafe-inline' 'unsafe-eval' *; style-src 'self' 'unsafe-inline' *; img-src 'self' data: blob: *;"
+      content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval' data: blob:; style-src * 'unsafe-inline' data:; img-src * data: blob:; font-src * data:; media-src * data: blob:; object-src *; frame-src *; worker-src * blob: data:; child-src * blob: data:;"
     />
   </head>
   <body></body>

@@ -1,0 +1,1623 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IBaseWTTPSite",
+  "sourceName": "@wttp/core/contracts/interfaces/IBaseWTTPSite.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "AccessControlBadConfirmation",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "neededRole",
+          "type": "bytes32"
+        }
+      ],
+      "name": "AccessControlUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "previousAdminRole",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "newAdminRole",
+          "type": "bytes32"
+        }
+      ],
+      "name": "RoleAdminChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "RoleGranted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "RoleRevoked",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "string",
+                  "name": "path",
+                  "type": "string"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "ifModifiedSince",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "ifNoneMatch",
+                  "type": "bytes32"
+                }
+              ],
+              "internalType": "struct HEADRequest",
+              "name": "head",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "components": [
+                    {
+                      "internalType": "bool",
+                      "name": "immutableFlag",
+                      "type": "bool"
+                    },
+                    {
+                      "internalType": "enum CachePreset",
+                      "name": "preset",
+                      "type": "uint8"
+                    },
+                    {
+                      "internalType": "string",
+                      "name": "custom",
+                      "type": "string"
+                    }
+                  ],
+                  "internalType": "struct CacheControl",
+                  "name": "cache",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint16",
+                      "name": "methods",
+                      "type": "uint16"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "origins",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "enum CORSPreset",
+                      "name": "preset",
+                      "type": "uint8"
+                    },
+                    {
+                      "internalType": "string",
+                      "name": "custom",
+                      "type": "string"
+                    }
+                  ],
+                  "internalType": "struct CORSPolicy",
+                  "name": "cors",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint16",
+                      "name": "code",
+                      "type": "uint16"
+                    },
+                    {
+                      "internalType": "string",
+                      "name": "location",
+                      "type": "string"
+                    }
+                  ],
+                  "internalType": "struct Redirect",
+                  "name": "redirect",
+                  "type": "tuple"
+                }
+              ],
+              "internalType": "struct HeaderInfo",
+              "name": "data",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct DEFINERequest",
+          "name": "defineRequest",
+          "type": "tuple"
+        }
+      ],
+      "name": "DEFINE",
+      "outputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "uint16",
+                  "name": "status",
+                  "type": "uint16"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "bool",
+                          "name": "immutableFlag",
+                          "type": "bool"
+                        },
+                        {
+                          "internalType": "enum CachePreset",
+                          "name": "preset",
+                          "type": "uint8"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "custom",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct CacheControl",
+                      "name": "cache",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint16",
+                          "name": "methods",
+                          "type": "uint16"
+                        },
+                        {
+                          "internalType": "bytes32[]",
+                          "name": "origins",
+                          "type": "bytes32[]"
+                        },
+                        {
+                          "internalType": "enum CORSPreset",
+                          "name": "preset",
+                          "type": "uint8"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "custom",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct CORSPolicy",
+                      "name": "cors",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint16",
+                          "name": "code",
+                          "type": "uint16"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "location",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct Redirect",
+                      "name": "redirect",
+                      "type": "tuple"
+                    }
+                  ],
+                  "internalType": "struct HeaderInfo",
+                  "name": "headerInfo",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "bytes2",
+                          "name": "mimeType",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "charset",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "encoding",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "language",
+                          "type": "bytes2"
+                        }
+                      ],
+                      "internalType": "struct ResourceProperties",
+                      "name": "properties",
+                      "type": "tuple"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "size",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "version",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "lastModified",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32",
+                      "name": "header",
+                      "type": "bytes32"
+                    }
+                  ],
+                  "internalType": "struct ResourceMetadata",
+                  "name": "metadata",
+                  "type": "tuple"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "etag",
+                  "type": "bytes32"
+                }
+              ],
+              "internalType": "struct HEADResponse",
+              "name": "head",
+              "type": "tuple"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "headerAddress",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct DEFINEResponse",
+          "name": "defineResponse",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "path",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "ifModifiedSince",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "ifNoneMatch",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct HEADRequest",
+          "name": "deleteRequest",
+          "type": "tuple"
+        }
+      ],
+      "name": "DELETE",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint16",
+              "name": "status",
+              "type": "uint16"
+            },
+            {
+              "components": [
+                {
+                  "components": [
+                    {
+                      "internalType": "bool",
+                      "name": "immutableFlag",
+                      "type": "bool"
+                    },
+                    {
+                      "internalType": "enum CachePreset",
+                      "name": "preset",
+                      "type": "uint8"
+                    },
+                    {
+                      "internalType": "string",
+                      "name": "custom",
+                      "type": "string"
+                    }
+                  ],
+                  "internalType": "struct CacheControl",
+                  "name": "cache",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint16",
+                      "name": "methods",
+                      "type": "uint16"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "origins",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "enum CORSPreset",
+                      "name": "preset",
+                      "type": "uint8"
+                    },
+                    {
+                      "internalType": "string",
+                      "name": "custom",
+                      "type": "string"
+                    }
+                  ],
+                  "internalType": "struct CORSPolicy",
+                  "name": "cors",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint16",
+                      "name": "code",
+                      "type": "uint16"
+                    },
+                    {
+                      "internalType": "string",
+                      "name": "location",
+                      "type": "string"
+                    }
+                  ],
+                  "internalType": "struct Redirect",
+                  "name": "redirect",
+                  "type": "tuple"
+                }
+              ],
+              "internalType": "struct HeaderInfo",
+              "name": "headerInfo",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "components": [
+                    {
+                      "internalType": "bytes2",
+                      "name": "mimeType",
+                      "type": "bytes2"
+                    },
+                    {
+                      "internalType": "bytes2",
+                      "name": "charset",
+                      "type": "bytes2"
+                    },
+                    {
+                      "internalType": "bytes2",
+                      "name": "encoding",
+                      "type": "bytes2"
+                    },
+                    {
+                      "internalType": "bytes2",
+                      "name": "language",
+                      "type": "bytes2"
+                    }
+                  ],
+                  "internalType": "struct ResourceProperties",
+                  "name": "properties",
+                  "type": "tuple"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "size",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "version",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "lastModified",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "header",
+                  "type": "bytes32"
+                }
+              ],
+              "internalType": "struct ResourceMetadata",
+              "name": "metadata",
+              "type": "tuple"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "etag",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct HEADResponse",
+          "name": "deleteResponse",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DPR",
+      "outputs": [
+        {
+          "internalType": "contract IDataPointRegistry",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DPS",
+      "outputs": [
+        {
+          "internalType": "contract IDataPointStorage",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "string",
+                  "name": "path",
+                  "type": "string"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "ifModifiedSince",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "ifNoneMatch",
+                  "type": "bytes32"
+                }
+              ],
+              "internalType": "struct HEADRequest",
+              "name": "head",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "int256",
+                  "name": "start",
+                  "type": "int256"
+                },
+                {
+                  "internalType": "int256",
+                  "name": "end",
+                  "type": "int256"
+                }
+              ],
+              "internalType": "struct Range",
+              "name": "rangeChunks",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct LOCATERequest",
+          "name": "getRequest",
+          "type": "tuple"
+        }
+      ],
+      "name": "GET",
+      "outputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "uint16",
+                  "name": "status",
+                  "type": "uint16"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "bool",
+                          "name": "immutableFlag",
+                          "type": "bool"
+                        },
+                        {
+                          "internalType": "enum CachePreset",
+                          "name": "preset",
+                          "type": "uint8"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "custom",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct CacheControl",
+                      "name": "cache",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint16",
+                          "name": "methods",
+                          "type": "uint16"
+                        },
+                        {
+                          "internalType": "bytes32[]",
+                          "name": "origins",
+                          "type": "bytes32[]"
+                        },
+                        {
+                          "internalType": "enum CORSPreset",
+                          "name": "preset",
+                          "type": "uint8"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "custom",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct CORSPolicy",
+                      "name": "cors",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint16",
+                          "name": "code",
+                          "type": "uint16"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "location",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct Redirect",
+                      "name": "redirect",
+                      "type": "tuple"
+                    }
+                  ],
+                  "internalType": "struct HeaderInfo",
+                  "name": "headerInfo",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "bytes2",
+                          "name": "mimeType",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "charset",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "encoding",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "language",
+                          "type": "bytes2"
+                        }
+                      ],
+                      "internalType": "struct ResourceProperties",
+                      "name": "properties",
+                      "type": "tuple"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "size",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "version",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "lastModified",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32",
+                      "name": "header",
+                      "type": "bytes32"
+                    }
+                  ],
+                  "internalType": "struct ResourceMetadata",
+                  "name": "metadata",
+                  "type": "tuple"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "etag",
+                  "type": "bytes32"
+                }
+              ],
+              "internalType": "struct HEADResponse",
+              "name": "head",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "bytes32[]",
+                  "name": "dataPoints",
+                  "type": "bytes32[]"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "totalChunks",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct ResourceResponse",
+              "name": "resource",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct LOCATEResponse",
+          "name": "getResponse",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "path",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "ifModifiedSince",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "ifNoneMatch",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct HEADRequest",
+          "name": "headRequest",
+          "type": "tuple"
+        }
+      ],
+      "name": "HEAD",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint16",
+              "name": "status",
+              "type": "uint16"
+            },
+            {
+              "components": [
+                {
+                  "components": [
+                    {
+                      "internalType": "bool",
+                      "name": "immutableFlag",
+                      "type": "bool"
+                    },
+                    {
+                      "internalType": "enum CachePreset",
+                      "name": "preset",
+                      "type": "uint8"
+                    },
+                    {
+                      "internalType": "string",
+                      "name": "custom",
+                      "type": "string"
+                    }
+                  ],
+                  "internalType": "struct CacheControl",
+                  "name": "cache",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint16",
+                      "name": "methods",
+                      "type": "uint16"
+                    },
+                    {
+                      "internalType": "bytes32[]",
+                      "name": "origins",
+                      "type": "bytes32[]"
+                    },
+                    {
+                      "internalType": "enum CORSPreset",
+                      "name": "preset",
+                      "type": "uint8"
+                    },
+                    {
+                      "internalType": "string",
+                      "name": "custom",
+                      "type": "string"
+                    }
+                  ],
+                  "internalType": "struct CORSPolicy",
+                  "name": "cors",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint16",
+                      "name": "code",
+                      "type": "uint16"
+                    },
+                    {
+                      "internalType": "string",
+                      "name": "location",
+                      "type": "string"
+                    }
+                  ],
+                  "internalType": "struct Redirect",
+                  "name": "redirect",
+                  "type": "tuple"
+                }
+              ],
+              "internalType": "struct HeaderInfo",
+              "name": "headerInfo",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "components": [
+                    {
+                      "internalType": "bytes2",
+                      "name": "mimeType",
+                      "type": "bytes2"
+                    },
+                    {
+                      "internalType": "bytes2",
+                      "name": "charset",
+                      "type": "bytes2"
+                    },
+                    {
+                      "internalType": "bytes2",
+                      "name": "encoding",
+                      "type": "bytes2"
+                    },
+                    {
+                      "internalType": "bytes2",
+                      "name": "language",
+                      "type": "bytes2"
+                    }
+                  ],
+                  "internalType": "struct ResourceProperties",
+                  "name": "properties",
+                  "type": "tuple"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "size",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "version",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "lastModified",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "header",
+                  "type": "bytes32"
+                }
+              ],
+              "internalType": "struct ResourceMetadata",
+              "name": "metadata",
+              "type": "tuple"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "etag",
+              "type": "bytes32"
+            }
+          ],
+          "internalType": "struct HEADResponse",
+          "name": "head",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_path",
+          "type": "string"
+        }
+      ],
+      "name": "OPTIONS",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint16",
+              "name": "status",
+              "type": "uint16"
+            },
+            {
+              "internalType": "uint16",
+              "name": "allow",
+              "type": "uint16"
+            }
+          ],
+          "internalType": "struct OPTIONSResponse",
+          "name": "optionsResponse",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "string",
+                  "name": "path",
+                  "type": "string"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "ifModifiedSince",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "ifNoneMatch",
+                  "type": "bytes32"
+                }
+              ],
+              "internalType": "struct HEADRequest",
+              "name": "head",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "bytes",
+                  "name": "data",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "chunkIndex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "publisher",
+                  "type": "address"
+                }
+              ],
+              "internalType": "struct DataRegistration[]",
+              "name": "data",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct PATCHRequest",
+          "name": "patchRequest",
+          "type": "tuple"
+        }
+      ],
+      "name": "PATCH",
+      "outputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "uint16",
+                  "name": "status",
+                  "type": "uint16"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "bool",
+                          "name": "immutableFlag",
+                          "type": "bool"
+                        },
+                        {
+                          "internalType": "enum CachePreset",
+                          "name": "preset",
+                          "type": "uint8"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "custom",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct CacheControl",
+                      "name": "cache",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint16",
+                          "name": "methods",
+                          "type": "uint16"
+                        },
+                        {
+                          "internalType": "bytes32[]",
+                          "name": "origins",
+                          "type": "bytes32[]"
+                        },
+                        {
+                          "internalType": "enum CORSPreset",
+                          "name": "preset",
+                          "type": "uint8"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "custom",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct CORSPolicy",
+                      "name": "cors",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint16",
+                          "name": "code",
+                          "type": "uint16"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "location",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct Redirect",
+                      "name": "redirect",
+                      "type": "tuple"
+                    }
+                  ],
+                  "internalType": "struct HeaderInfo",
+                  "name": "headerInfo",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "bytes2",
+                          "name": "mimeType",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "charset",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "encoding",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "language",
+                          "type": "bytes2"
+                        }
+                      ],
+                      "internalType": "struct ResourceProperties",
+                      "name": "properties",
+                      "type": "tuple"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "size",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "version",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "lastModified",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32",
+                      "name": "header",
+                      "type": "bytes32"
+                    }
+                  ],
+                  "internalType": "struct ResourceMetadata",
+                  "name": "metadata",
+                  "type": "tuple"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "etag",
+                  "type": "bytes32"
+                }
+              ],
+              "internalType": "struct HEADResponse",
+              "name": "head",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "bytes32[]",
+                  "name": "dataPoints",
+                  "type": "bytes32[]"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "totalChunks",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct ResourceResponse",
+              "name": "resource",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct LOCATEResponse",
+          "name": "patchResponse",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "string",
+                  "name": "path",
+                  "type": "string"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "ifModifiedSince",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "ifNoneMatch",
+                  "type": "bytes32"
+                }
+              ],
+              "internalType": "struct HEADRequest",
+              "name": "head",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "bytes2",
+                  "name": "mimeType",
+                  "type": "bytes2"
+                },
+                {
+                  "internalType": "bytes2",
+                  "name": "charset",
+                  "type": "bytes2"
+                },
+                {
+                  "internalType": "bytes2",
+                  "name": "encoding",
+                  "type": "bytes2"
+                },
+                {
+                  "internalType": "bytes2",
+                  "name": "language",
+                  "type": "bytes2"
+                }
+              ],
+              "internalType": "struct ResourceProperties",
+              "name": "properties",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "bytes",
+                  "name": "data",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "chunkIndex",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "address",
+                  "name": "publisher",
+                  "type": "address"
+                }
+              ],
+              "internalType": "struct DataRegistration[]",
+              "name": "data",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct PUTRequest",
+          "name": "putRequest",
+          "type": "tuple"
+        }
+      ],
+      "name": "PUT",
+      "outputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "uint16",
+                  "name": "status",
+                  "type": "uint16"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "bool",
+                          "name": "immutableFlag",
+                          "type": "bool"
+                        },
+                        {
+                          "internalType": "enum CachePreset",
+                          "name": "preset",
+                          "type": "uint8"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "custom",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct CacheControl",
+                      "name": "cache",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint16",
+                          "name": "methods",
+                          "type": "uint16"
+                        },
+                        {
+                          "internalType": "bytes32[]",
+                          "name": "origins",
+                          "type": "bytes32[]"
+                        },
+                        {
+                          "internalType": "enum CORSPreset",
+                          "name": "preset",
+                          "type": "uint8"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "custom",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct CORSPolicy",
+                      "name": "cors",
+                      "type": "tuple"
+                    },
+                    {
+                      "components": [
+                        {
+                          "internalType": "uint16",
+                          "name": "code",
+                          "type": "uint16"
+                        },
+                        {
+                          "internalType": "string",
+                          "name": "location",
+                          "type": "string"
+                        }
+                      ],
+                      "internalType": "struct Redirect",
+                      "name": "redirect",
+                      "type": "tuple"
+                    }
+                  ],
+                  "internalType": "struct HeaderInfo",
+                  "name": "headerInfo",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "components": [
+                        {
+                          "internalType": "bytes2",
+                          "name": "mimeType",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "charset",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "encoding",
+                          "type": "bytes2"
+                        },
+                        {
+                          "internalType": "bytes2",
+                          "name": "language",
+                          "type": "bytes2"
+                        }
+                      ],
+                      "internalType": "struct ResourceProperties",
+                      "name": "properties",
+                      "type": "tuple"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "size",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "version",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "lastModified",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bytes32",
+                      "name": "header",
+                      "type": "bytes32"
+                    }
+                  ],
+                  "internalType": "struct ResourceMetadata",
+                  "name": "metadata",
+                  "type": "tuple"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "etag",
+                  "type": "bytes32"
+                }
+              ],
+              "internalType": "struct HEADResponse",
+              "name": "head",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "bytes32[]",
+                  "name": "dataPoints",
+                  "type": "bytes32[]"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "totalChunks",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct ResourceResponse",
+              "name": "resource",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct LOCATEResponse",
+          "name": "putResponse",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_newSiteAdmin",
+          "type": "bytes32"
+        }
+      ],
+      "name": "changeSiteAdmin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_role",
+          "type": "bytes32"
+        }
+      ],
+      "name": "createResourceRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getRoleAdmin",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getSiteAdminRole",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "grantRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "hasRole",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "callerConfirmation",
+          "type": "address"
+        }
+      ],
+      "name": "renounceRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "revokeRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

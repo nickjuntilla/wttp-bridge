@@ -1,6 +1,110 @@
 // getTagsFromHtml.js
 import { parseWttpUrl } from "./parseWttpUrl.js";
-import { WTTPHandler } from "@wttp/handler";
+import {
+  fetchWTTPResource,
+  decodeContent,
+  getContractAddress,
+  isEnsAddress,
+} from "../utils/wttpFetch.js";
+
+// Helper function to process embedded URLs in CSS content
+async function processCssUrls(cssContent, currentAddress, currentChain) {
+  // Regular expression to find url() declarations in CSS
+  const urlRegex = /url\(['"]?([^'")]+)['"]?\)/g;
+  let processedCss = cssContent;
+  let match;
+
+  while ((match = urlRegex.exec(cssContent)) !== null) {
+    const originalUrl = match[0]; // The full url() declaration
+    const urlPath = match[1]; // Just the URL path inside url()
+
+    // Skip if it's already an absolute URL (http/https/data)
+    if (
+      urlPath.startsWith("http://") ||
+      urlPath.startsWith("https://") ||
+      urlPath.startsWith("data:") ||
+      urlPath.startsWith("//")
+    ) {
+      continue;
+    }
+
+    try {
+      let siteAddress;
+      let network;
+      let resourcePath;
+
+      if (urlPath.startsWith("wttp://")) {
+        // Handle WTTP URLs directly
+        const { address, chain, path } = parseWttpUrl(urlPath);
+        siteAddress = address;
+        network = chain;
+        resourcePath = path;
+      } else {
+        // Handle relative URLs - fetch from the same WTTP source
+        siteAddress = currentAddress;
+        network = currentChain;
+        resourcePath = urlPath.startsWith("/") ? urlPath : `/${urlPath}`;
+      }
+
+      console.log("Fetching CSS embedded resource:", {
+        siteAddress,
+        resourcePath,
+        network,
+      });
+
+      const result = await fetchWTTPResource({
+        siteAddress: siteAddress,
+        path: resourcePath,
+        network: network,
+      });
+
+      if (
+        result.response.head.status === 200n ||
+        result.response.head.status === 206n
+      ) {
+        const mimeType = result.response.head.metadata.properties.mimeType;
+
+        if (result.content) {
+          const content = decodeContent(result.content, mimeType);
+
+          // Determine MIME type based on file extension
+          const extension = urlPath.split(".").pop().toLowerCase();
+          let actualMimeType = "application/octet-stream";
+
+          if (extension === "jpg" || extension === "jpeg") {
+            actualMimeType = "image/jpeg";
+          } else if (extension === "png") {
+            actualMimeType = "image/png";
+          } else if (extension === "gif") {
+            actualMimeType = "image/gif";
+          } else if (extension === "svg") {
+            actualMimeType = "image/svg+xml";
+          } else if (extension === "webp") {
+            actualMimeType = "image/webp";
+          }
+
+          // Create data URL
+          const base64Content =
+            typeof content === "string"
+              ? btoa(content)
+              : btoa(String.fromCharCode(...result.content));
+          const dataUrl = `data:${actualMimeType};base64,${base64Content}`;
+          processedCss = processedCss.replace(originalUrl, `url('${dataUrl}')`);
+        }
+
+        console.log("Successfully processed CSS embedded URL:", urlPath);
+      } else {
+        console.warn(
+          `Failed to fetch CSS embedded resource ${urlPath}: ${result.response.head.status} - Resource not found`
+        );
+      }
+    } catch (error) {
+      console.warn(`Failed to process CSS embedded URL ${urlPath}:`, error);
+    }
+  }
+
+  return processedCss;
+}
 
 export async function processStyleSheets(fullContent) {
   const styleSheets = fullContent.match(/<link[^>]+>/g);
@@ -18,53 +122,44 @@ export async function processStyleSheets(fullContent) {
         if (href.startsWith("wttp://")) {
           const { address, chain, path } = parseWttpUrl(href);
 
-          // Create WTTP handler instance with the selected network's chain ID
-          const wttp = new WTTPHandler(undefined, chain);
+          try {
+            const result = await fetchWTTPResource({
+              siteAddress: address,
+              path: path,
+              network: chain,
+            });
 
-          // Fetch content from the WTTP site
-          const url = `wttp://${address}${path}`;
+            if (
+              result.response.head.status === 200n ||
+              result.response.head.status === 206n
+            ) {
+              if (result.content) {
+                const mimeType =
+                  result.response.head.metadata.properties.mimeType;
+                const content = decodeContent(result.content, mimeType);
 
-          const response = await wttp.fetch(url);
+                // Style sheets linked without the .css extension don't work
+                // so we need to add the contents in a style tag
 
-          if (response.ok) {
-            // Get the content type from headers
-            const contentType = response.headers.get("Content-Type") || "";
-
-            // Use the Response.text() method to get the body as text
-            const content = await response.text();
-
-            // Style sheets linked without the .css extension don't work
-            // so we need to add the contents in a style tag
-
-            if (contentType === "ipfs") {
-              const jsonContent = JSON.parse(content);
-              const contentLink = jsonContent.link;
-
-              // Fetch the content from IPFS using a gateway
-              const ipfsResponse = await fetch(parseIpfsLink(contentLink));
-
-              // Check if the response is okay
-              if (!ipfsResponse.ok) {
-                throw new Error(
-                  `Error fetching IPFS content: ${ipfsResponse.statusText}`
+                // Process any embedded URLs in the CSS content
+                const cssContent =
+                  typeof content === "string"
+                    ? content
+                    : new TextDecoder().decode(result.content);
+                const processedContent = await processCssUrls(
+                  cssContent,
+                  address,
+                  chain
                 );
+                styleTag.innerHTML = processedContent;
+
+                document.head.appendChild(styleTag);
+                // Delete found link tag from fullContent
+                fullContent = fullContent.replace(styleSheet, "");
               }
-
-              // Read the response as a Blob for binary data
-              const ipfsBlob = await ipfsResponse.blob();
-
-              // console.log("Blob is: ", ipfsBlob);
-
-              let _content = await ipfsBlob.text();
-
-              styleTag.innerHTML = _content;
-            } else {
-              styleTag.innerHTML = content;
             }
-
-            document.head.appendChild(styleTag);
-            // Delete found link tag from fullContent
-            fullContent = fullContent.replace(styleSheet, "");
+          } catch (error) {
+            console.warn(`Failed to fetch stylesheet ${href}:`, error);
           }
         } else if (href.endsWith(".css") || href.includes("style")) {
           // Handle regular CSS files that might be relative URLs
@@ -85,48 +180,52 @@ export async function processStyleSheets(fullContent) {
 
             const { address, chain } = parseWttpUrl(wttpUrl);
 
-            // Construct the full WTTP URL for the CSS file
-            const cssPath = href.startsWith("/") ? href : `/${href}`;
-            const cssWttpUrl = `wttp://${address}${cssPath}`;
-            console.log("Fetching CSS from WTTP URL:", cssWttpUrl);
+            // Construct the path for the CSS file
+            const cssPath = href;
+            console.log(
+              "Fetching CSS from WTTP site:",
+              address,
+              "path:",
+              cssPath
+            );
 
-            // Create WTTP handler instance
-            const wttp = new WTTPHandler(undefined, chain);
+            const result = await fetchWTTPResource({
+              siteAddress: address,
+              path: cssPath,
+              network: chain,
+            });
 
-            const response = await wttp.fetch(cssWttpUrl);
+            if (
+              result.response.head.status === 200n ||
+              result.response.head.status === 206n
+            ) {
+              if (result.content) {
+                const mimeType =
+                  result.response.head.metadata.properties.mimeType;
+                const content = decodeContent(result.content, mimeType);
+                console.log("CSS response MIME type:", mimeType);
+                console.log("CSS content length:", result.content.length);
 
-            if (response.ok) {
-              const contentType = response.headers.get("Content-Type") || "";
-              const content = await response.text();
-              console.log("CSS response content type:", contentType);
-              console.log("CSS content length:", content.length);
+                // Process any embedded URLs in the CSS content
+                const cssContent =
+                  typeof content === "string"
+                    ? content
+                    : new TextDecoder().decode(result.content);
+                const processedContent = await processCssUrls(
+                  cssContent,
+                  address,
+                  chain
+                );
+                styleTag.innerHTML = processedContent;
 
-              if (contentType === "ipfs") {
-                const jsonContent = JSON.parse(content);
-                const contentLink = jsonContent.link;
-
-                const ipfsResponse = await fetch(parseIpfsLink(contentLink));
-
-                if (!ipfsResponse.ok) {
-                  throw new Error(
-                    `Error fetching IPFS content: ${ipfsResponse.statusText}`
-                  );
-                }
-
-                const ipfsBlob = await ipfsResponse.blob();
-                let _content = await ipfsBlob.text();
-                styleTag.innerHTML = _content;
-              } else {
-                styleTag.innerHTML = content;
+                document.head.appendChild(styleTag);
+                console.log("Successfully added style tag for:", href);
+                // Remove the original link tag from fullContent
+                fullContent = fullContent.replace(styleSheet, "");
               }
-
-              document.head.appendChild(styleTag);
-              console.log("Successfully added style tag for:", href);
-              // Remove the original link tag from fullContent
-              fullContent = fullContent.replace(styleSheet, "");
             } else {
               console.warn(
-                `Failed to fetch CSS file ${href}: ${response.status} - ${response.statusText}`
+                `Failed to fetch CSS file ${href}: ${result.response.head.status} - Resource not found`
               );
               // Remove the original link tag even if fetch failed to prevent browser from trying to load it
               fullContent = fullContent.replace(styleSheet, "");
@@ -154,44 +253,156 @@ export async function processScripts(fullContent) {
       if (srcMatch) {
         // Handle scripts with src attribute
         const scriptSrc = srcMatch[1];
+
+        // Check if the original script tag has type="module"
+        const isModule =
+          script.includes('type="module"') || script.includes("type='module'");
         if (scriptSrc.startsWith("wttp://")) {
           console.log("Processing wttp script:", scriptSrc);
           const { address, chain, path } = parseWttpUrl(scriptSrc);
 
-          // Create WTTP handler instance with the selected network's chain ID
-          const wttp = new WTTPHandler(undefined, chain);
+          try {
+            const result = await fetchWTTPResource({
+              siteAddress: address,
+              path: path,
+              network: chain,
+            });
 
-          // Fetch content from the WTTP site
-          const url = `wttp://${address}${path}`;
+            if (
+              result.response.head.status === 200n ||
+              result.response.head.status === 206n
+            ) {
+              if (result.content) {
+                const mimeType =
+                  result.response.head.metadata.properties.mimeType;
+                const content = decodeContent(result.content, mimeType);
+                const scriptTag = document.createElement("script");
 
-          const response = await wttp.fetch(url);
+                let scriptContent =
+                  typeof content === "string"
+                    ? content
+                    : new TextDecoder().decode(result.content);
 
-          if (response.ok) {
-            // Get the content type from headers
-            const contentType = response.headers.get("Content-Type") || "";
+                // Validate script content before processing
+                if (!scriptContent || scriptContent.trim() === "") {
+                  console.warn("Empty script content, skipping:", scriptSrc);
+                  fullContent = fullContent.replace(script, "");
+                  continue;
+                }
 
-            // Use the Response.text() method to get the body as text
-            const content = await response.text();
+                // Additional integrity check for large scripts
+                if (scriptContent.length > 50000) {
+                  console.log(
+                    "Large script detected, performing integrity check..."
+                  );
 
-            // console.log(
-            //   "This is a script tag with a wttp link and with content",
-            //   path,
-            //   content,
-            //   contentLink
-            // );
-            const scriptTag = document.createElement("script");
+                  // Check if this is an ES module - if so, skip Function validation as it doesn't support module syntax
+                  const isESModule =
+                    scriptContent.includes("import.meta") ||
+                    scriptContent.includes("import ") ||
+                    scriptContent.includes("export ");
 
-            if (contentType === "ipfs") {
-              const jsonContent = JSON.parse(content);
-              const contentLink = jsonContent.link;
-              scriptTag.src = parseIpfsLink(contentLink);
-            } else {
-              scriptTag.innerHTML = content;
+                  if (!isESModule) {
+                    // Only validate non-module scripts with Function constructor
+                    try {
+                      new Function(scriptContent);
+                      console.log("Large script passed integrity check");
+                    } catch (syntaxError) {
+                      console.warn(
+                        "Syntax error in large script, attempting recovery..."
+                      );
+                      console.warn("Syntax error:", syntaxError.message);
+
+                      // Try re-decoding from raw bytes with explicit UTF-8
+                      try {
+                        const redecodedContent = new TextDecoder("utf-8", {
+                          fatal: true,
+                        }).decode(result.content);
+                        new Function(redecodedContent);
+                        console.log("Successfully re-decoded script content");
+                        // Replace the problematic content with the corrected version
+                        scriptContent = redecodedContent;
+                      } catch (retryError) {
+                        console.error(
+                          "Failed to recover script content:",
+                          retryError
+                        );
+                        fullContent = fullContent.replace(script, "");
+                        continue;
+                      }
+                    }
+                  } else {
+                    console.log(
+                      "ES module detected, skipping Function validation"
+                    );
+                  }
+                }
+
+                // For large modules or when original had src, use blob URL instead of innerHTML
+                if (
+                  isModule ||
+                  scriptContent.length > 50000 ||
+                  scriptContent.includes("import.meta") ||
+                  scriptContent.includes("import ") ||
+                  scriptContent.includes("export ")
+                ) {
+                  // Create a blob URL for the script content
+                  const blob = new Blob([scriptContent], {
+                    type: "application/javascript",
+                  });
+                  const blobUrl = URL.createObjectURL(blob);
+                  scriptTag.src = blobUrl;
+                  scriptTag.type = "module";
+
+                  console.log(
+                    "Created blob URL for large/module script:",
+                    scriptSrc,
+                    "Size:",
+                    scriptContent.length
+                  );
+                } else {
+                  // Small, non-module scripts can use innerHTML
+                  try {
+                    scriptTag.innerHTML = scriptContent;
+                  } catch (error) {
+                    console.warn(
+                      "Failed to set script innerHTML for:",
+                      scriptSrc,
+                      error
+                    );
+                    console.warn(
+                      "Problematic content preview:",
+                      scriptContent.substring(0, 200)
+                    );
+                    fullContent = fullContent.replace(script, "");
+                    continue;
+                  }
+                }
+
+                try {
+                  document.head.appendChild(scriptTag);
+                  console.log("Successfully added script tag for:", scriptSrc);
+                } catch (error) {
+                  console.warn(
+                    "Failed to append script tag for:",
+                    scriptSrc,
+                    error
+                  );
+                  console.warn(
+                    "Script content preview:",
+                    scriptTag.innerHTML
+                      ? scriptTag.innerHTML.substring(0, 200)
+                      : "no content"
+                  );
+                  fullContent = fullContent.replace(script, "");
+                  continue;
+                }
+                // Delete found script tag from fullContent
+                fullContent = fullContent.replace(script, "");
+              }
             }
-
-            document.head.appendChild(scriptTag);
-            // Delete found script tag from fullContent
-            fullContent = fullContent.replace(script, "");
+          } catch (error) {
+            console.warn(`Failed to fetch script ${scriptSrc}:`, error);
           }
         } else if (
           !scriptSrc.startsWith("http://") &&
@@ -217,42 +428,182 @@ export async function processScripts(fullContent) {
             const { address, chain } = parseWttpUrl(wttpUrl);
             const chainString = ":" + chain;
 
-            // Construct the full WTTP URL for the JS file
-            const jsPath = scriptSrc.startsWith("/")
-              ? scriptSrc
-              : `/${scriptSrc}`;
-            const jsWttpUrl = `wttp://${address}${chainString}${jsPath}`;
-            console.log("Fetching JS from WTTP URL:", jsWttpUrl);
+            // Construct the path for the JS file
+            const jsPath = scriptSrc;
 
-            // Create WTTP handler instance
-            const wttp = new WTTPHandler(undefined, chain);
+            // Use cached address resolution to avoid CSP issues
+            let resolvedAddress;
+            try {
+              resolvedAddress = await getContractAddress(address);
+              console.log(
+                "Fetching JS from WTTP site:",
+                resolvedAddress,
+                "path:",
+                jsPath
+              );
+            } catch (error) {
+              console.error(`Failed to resolve address ${address}:`, error);
+              continue; // Skip this script
+            }
 
-            const response = await wttp.fetch(jsWttpUrl);
+            const result = await fetchWTTPResource({
+              siteAddress: resolvedAddress,
+              path: jsPath,
+              network: chain,
+            });
 
-            if (response.ok) {
-              const contentType = response.headers.get("Content-Type") || "";
-              const content = await response.text();
-              console.log("JS response content type:", contentType);
-              console.log("JS content length:", content.length);
+            if (
+              result.response.head.status === 200n ||
+              result.response.head.status === 206n
+            ) {
+              if (result.content) {
+                const mimeType =
+                  result.response.head.metadata.properties.mimeType;
+                const content = decodeContent(result.content, mimeType);
+                console.log("JS response MIME type:", mimeType);
+                console.log("JS content length:", result.content.length);
 
-              const scriptTag = document.createElement("script");
+                // Debug: Check content integrity
+                console.log("Raw content type:", typeof content);
+                if (typeof content === "string") {
+                  console.log(
+                    "Content first 100 chars:",
+                    content.substring(0, 100)
+                  );
+                  console.log(
+                    "Content last 100 chars:",
+                    content.substring(content.length - 100)
+                  );
+                }
 
-              if (contentType === "ipfs") {
-                const jsonContent = JSON.parse(content);
-                const contentLink = jsonContent.link;
-                scriptTag.src = parseIpfsLink(contentLink);
-              } else {
-                scriptTag.innerHTML = content;
+                const scriptTag = document.createElement("script");
+
+                let scriptContent =
+                  typeof content === "string"
+                    ? content
+                    : new TextDecoder().decode(result.content);
+
+                // Validate script content before processing
+                if (!scriptContent || scriptContent.trim() === "") {
+                  console.warn("Empty script content, skipping:", scriptSrc);
+                  fullContent = fullContent.replace(script, "");
+                  continue;
+                }
+
+                // Additional integrity check for large scripts
+                if (scriptContent.length > 50000) {
+                  console.log(
+                    "Large script detected, performing integrity check..."
+                  );
+
+                  // Check if this is an ES module - if so, skip Function validation as it doesn't support module syntax
+                  const isESModule =
+                    scriptContent.includes("import.meta") ||
+                    scriptContent.includes("import ") ||
+                    scriptContent.includes("export ");
+
+                  if (!isESModule) {
+                    // Only validate non-module scripts with Function constructor
+                    try {
+                      new Function(scriptContent);
+                      console.log("Large script passed integrity check");
+                    } catch (syntaxError) {
+                      console.warn(
+                        "Syntax error in large script, attempting recovery..."
+                      );
+                      console.warn("Syntax error:", syntaxError.message);
+
+                      // Try re-decoding from raw bytes with explicit UTF-8
+                      try {
+                        const redecodedContent = new TextDecoder("utf-8", {
+                          fatal: true,
+                        }).decode(result.content);
+                        new Function(redecodedContent);
+                        console.log("Successfully re-decoded script content");
+                        // Replace the problematic content with the corrected version
+                        scriptContent = redecodedContent;
+                      } catch (retryError) {
+                        console.error(
+                          "Failed to recover script content:",
+                          retryError
+                        );
+                        fullContent = fullContent.replace(script, "");
+                        continue;
+                      }
+                    }
+                  } else {
+                    console.log(
+                      "ES module detected, skipping Function validation"
+                    );
+                  }
+                }
+
+                // For large modules or when original had src, use blob URL instead of innerHTML
+                if (
+                  isModule ||
+                  scriptContent.length > 50000 ||
+                  scriptContent.includes("import.meta") ||
+                  scriptContent.includes("import ") ||
+                  scriptContent.includes("export ")
+                ) {
+                  // Create a blob URL for the script content
+                  const blob = new Blob([scriptContent], {
+                    type: "application/javascript",
+                  });
+                  const blobUrl = URL.createObjectURL(blob);
+                  scriptTag.src = blobUrl;
+                  scriptTag.type = "module";
+
+                  console.log(
+                    "Created blob URL for large/module script:",
+                    scriptSrc,
+                    "Size:",
+                    scriptContent.length
+                  );
+                } else {
+                  // Small, non-module scripts can use innerHTML
+                  try {
+                    scriptTag.innerHTML = scriptContent;
+                  } catch (error) {
+                    console.warn(
+                      "Failed to set script innerHTML for:",
+                      scriptSrc,
+                      error
+                    );
+                    console.warn(
+                      "Problematic content preview:",
+                      scriptContent.substring(0, 200)
+                    );
+                    fullContent = fullContent.replace(script, "");
+                    continue;
+                  }
+                }
+
+                try {
+                  document.head.appendChild(scriptTag);
+                  console.log("Successfully added script tag for:", scriptSrc);
+                } catch (error) {
+                  console.warn(
+                    "Failed to append script tag for:",
+                    scriptSrc,
+                    error
+                  );
+                  console.warn(
+                    "Script content preview:",
+                    scriptTag.innerHTML
+                      ? scriptTag.innerHTML.substring(0, 200)
+                      : "no content"
+                  );
+                  fullContent = fullContent.replace(script, "");
+                  continue;
+                }
+                // console.log("content of script tag is: ", scriptTag.innerHTML);
+                // Remove the original script tag from fullContent
+                fullContent = fullContent.replace(script, "");
               }
-
-              document.head.appendChild(scriptTag);
-              console.log("Successfully added script tag for:", scriptSrc);
-              console.log("content of script tag is: ", scriptTag.innerHTML);
-              // Remove the original script tag from fullContent
-              fullContent = fullContent.replace(script, "");
             } else {
               console.warn(
-                `Failed to fetch JS file ${scriptSrc}: ${response.status} - ${response.statusText}`
+                `Failed to fetch JS file ${scriptSrc}: ${result.response.head.status} - Resource not found`
               );
               // Remove the original script tag even if fetch failed to prevent browser from trying to load it
               fullContent = fullContent.replace(script, "");
@@ -277,13 +628,56 @@ export async function processScripts(fullContent) {
           // Extract any attributes from the original script tag
           const attributeMatches = script.match(/(\w+)="([^"]+)"/g);
 
+          // Validate script content before execution
+          if (!scriptContent || scriptContent.trim() === "") {
+            console.warn("Empty or invalid script content, skipping execution");
+            fullContent = fullContent.replace(script, "");
+            continue;
+          }
+
+          // Check for common JS syntax issues that could cause "Unexpected end of input"
+          const trimmedContent = scriptContent.trim();
+          if (
+            trimmedContent.endsWith(",") ||
+            trimmedContent.endsWith("{") ||
+            trimmedContent.endsWith("(")
+          ) {
+            console.warn(
+              "Script content appears incomplete (ends with incomplete syntax), skipping execution"
+            );
+            console.warn(
+              "Script content that appears incomplete:",
+              scriptContent.substring(0, 500)
+            );
+            fullContent = fullContent.replace(script, "");
+            continue;
+          }
+
           // Execute the script content directly using eval
           try {
             console.log("Executing embedded script content");
+            console.log(
+              "Script content preview:",
+              scriptContent.substring(0, 200) + "..."
+            );
+
+            // Try to parse the script first to check for syntax errors
+            new Function(scriptContent);
+
+            // If parsing succeeds, execute it
             eval(scriptContent);
             console.log("Successfully executed embedded script");
           } catch (error) {
             console.warn("Failed to execute embedded script:", error);
+            console.warn(
+              "Script content that failed:",
+              scriptContent.substring(0, 500)
+            );
+
+            // If it's a syntax error, show more details
+            if (error instanceof SyntaxError) {
+              console.warn("Syntax error details:", error.message);
+            }
           }
 
           // Remove the original script tag from fullContent
@@ -309,42 +703,33 @@ export async function processImages() {
       try {
         const { address, chain, path } = parseWttpUrl(imageSrc);
 
-        // Create WTTP handler instance with the selected network's chain ID
-        const wttp = new WTTPHandler(undefined, chain);
+        const result = await fetchWTTPResource({
+          siteAddress: address,
+          path: path,
+          chainId: chain,
+        });
 
-        // Fetch content from the WTTP site
-        const url = `wttp://${address}${path}`;
+        if (
+          result.response.head.status === 200n ||
+          result.response.head.status === 206n
+        ) {
+          if (result.content) {
+            const mimeType = result.response.head.metadata.properties.mimeType;
+            const content = decodeContent(result.content, mimeType);
 
-        const response = await wttp.fetch(url);
-
-        if (response.ok) {
-          // Get the content type from headers
-          const contentType = response.headers.get("Content-Type") || "";
-
-          // Use the Response.text() method to get the body as text
-          const content = await response.text();
-
-          // console.log(
-          //   "This is an image tag with a wttp link and with content",
-          //   imageSrc,
-          //   content
-          // );
-
-          // if contentLink exists set the image src to the contentLink
-          if (contentType === "ipfs") {
-            const jsonContent = JSON.parse(content);
-            const contentLink = jsonContent.link;
-            image.src = parseIpfsLink(contentLink);
-          } else {
-            // convert content to base64 dataUrl for image tag
-            const dataUrl = `data:image/png;base64,${content}`;
+            // Convert content to base64 dataUrl for image tag
+            const base64Content =
+              typeof content === "string"
+                ? btoa(content)
+                : btoa(String.fromCharCode(...result.content));
+            const dataUrl = `data:image/png;base64,${base64Content}`;
             image.src = dataUrl;
-          }
 
-          console.log("Successfully updated image src for:", imageSrc);
+            console.log("Successfully updated image src for:", imageSrc);
+          }
         } else {
           console.warn(
-            `Failed to fetch image ${imageSrc}: ${response.status} - ${response.statusText}`
+            `Failed to fetch image ${imageSrc}: ${result.response.head.status} - Resource not found`
           );
         }
       } catch (error) {
@@ -376,36 +761,53 @@ export async function processImages() {
         const { address, chain } = parseWttpUrl(wttpUrl);
         const chainString = ":" + chain;
 
-        // Construct the full WTTP URL for the image file
-        const imagePath = imageSrc.startsWith("/") ? imageSrc : `/${imageSrc}`;
-        const imageWttpUrl = `wttp://${address}${chainString}${imagePath}`;
-        console.log("Fetching image from WTTP URL:", imageWttpUrl);
+        // Construct the path for the image file
+        const imagePath = imageSrc;
 
-        // Create WTTP handler instance
-        const wttp = new WTTPHandler(undefined, chain);
+        // Use cached address resolution to avoid CSP issues
+        let resolvedAddress;
+        try {
+          resolvedAddress = await getContractAddress(address);
+          console.log(
+            "Fetching image from WTTP site:",
+            resolvedAddress,
+            "path:",
+            imagePath
+          );
+        } catch (error) {
+          console.error(`Failed to resolve address ${address}:`, error);
+          continue; // Skip this image
+        }
 
-        const response = await wttp.fetch(imageWttpUrl);
+        const result = await fetchWTTPResource({
+          siteAddress: resolvedAddress,
+          path: imagePath,
+          chainId: chain,
+        });
 
-        if (response.ok) {
-          const contentType = response.headers.get("Content-Type") || "";
-          const content = await response.text();
-          console.log("Image response content type:", contentType);
-          console.log("Image content length:", content.length);
+        if (
+          result.response.head.status === 200n ||
+          result.response.head.status === 206n
+        ) {
+          if (result.content) {
+            const mimeType = result.response.head.metadata.properties.mimeType;
+            const content = decodeContent(result.content, mimeType);
+            console.log("Image response MIME type:", mimeType);
+            console.log("Image content length:", result.content.length);
 
-          if (contentType === "ipfs") {
-            const jsonContent = JSON.parse(content);
-            const contentLink = jsonContent.link;
-            image.src = parseIpfsLink(contentLink);
-          } else {
-            // convert content to base64 dataUrl for image tag
-            const dataUrl = `data:image/png;base64,${content}`;
+            // Convert content to base64 dataUrl for image tag
+            const base64Content =
+              typeof content === "string"
+                ? btoa(content)
+                : btoa(String.fromCharCode(...result.content));
+            const dataUrl = `data:image/png;base64,${base64Content}`;
             image.src = dataUrl;
-          }
 
-          console.log("Successfully updated image src for:", imageSrc);
+            console.log("Successfully updated image src for:", imageSrc);
+          }
         } else {
           console.warn(
-            `Failed to fetch image file ${imageSrc}: ${response.status} - ${response.statusText}`
+            `Failed to fetch image file ${imageSrc}: ${result.response.head.status} - Resource not found`
           );
         }
       } catch (error) {
@@ -413,19 +815,4 @@ export async function processImages() {
       }
     }
   }
-}
-
-function parseIpfsLink(link) {
-  // if link has /ipfs/ in it then get everrything after /ipfs/
-  // and add https://ipfs.io/ipfs/ to the front
-  if (link.includes("/ipfs/")) {
-    return `https://ipfs.io/ipfs/${link.split("/ipfs/")[1]}`;
-  }
-
-  // if link starts with ipfs:// then remove it and add https://ipfs.io/ipfs/
-  if (link.startsWith("ipfs://")) {
-    return `https://ipfs.io/ipfs/${link.split("ipfs://")[1]}`;
-  }
-
-  return link;
 }
