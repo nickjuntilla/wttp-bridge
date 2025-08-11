@@ -1,11 +1,6 @@
 // getTagsFromHtml.js
 import { parseWttpUrl } from "./parseWttpUrl.js";
-import {
-  fetchWTTPResource,
-  decodeContent,
-  getContractAddress,
-  isEnsAddress,
-} from "../utils/wttpFetch.js";
+import { fetchWTTPResource, decodeContent } from "../utils/wttpFetch.js";
 
 // Helper function to process embedded URLs in CSS content
 async function processCssUrls(cssContent, currentAddress, currentChain) {
@@ -119,52 +114,22 @@ export async function processStyleSheets(fullContent) {
         const styleTag = document.createElement("style");
 
         // Handle both WTTP URLs and regular relative URLs
+        let result;
+        let fetchAddress;
+        let fetchChain;
+        let fetchPath;
+
         if (href.startsWith("wttp://")) {
           const { address, chain, path } = parseWttpUrl(href);
+          console.log("Processing wttp stylesheet", address, chain, path);
 
-          try {
-            const result = await fetchWTTPResource({
-              siteAddress: address,
-              path: path,
-              network: chain,
-            });
-
-            if (
-              result.response.head.status === 200n ||
-              result.response.head.status === 206n
-            ) {
-              if (result.content) {
-                const mimeType =
-                  result.response.head.metadata.properties.mimeType;
-                const content = decodeContent(result.content, mimeType);
-
-                // Style sheets linked without the .css extension don't work
-                // so we need to add the contents in a style tag
-
-                // Process any embedded URLs in the CSS content
-                const cssContent =
-                  typeof content === "string"
-                    ? content
-                    : new TextDecoder().decode(result.content);
-                const processedContent = await processCssUrls(
-                  cssContent,
-                  address,
-                  chain
-                );
-                styleTag.innerHTML = processedContent;
-
-                document.head.appendChild(styleTag);
-                // Delete found link tag from fullContent
-                fullContent = fullContent.replace(styleSheet, "");
-              }
-            }
-          } catch (error) {
-            console.warn(`Failed to fetch stylesheet ${href}:`, error);
-          }
+          fetchAddress = address;
+          fetchChain = chain;
+          fetchPath = path;
         } else if (href.endsWith(".css") || href.includes("style")) {
           // Handle regular CSS files that might be relative URLs
           // These should be fetched from the same WTTP source as the main page
-          console.log("Processing regular CSS file:", href);
+          console.log("Processing relative CSS file:", href);
           try {
             // Get the current WTTP URL from the page
             const currentUrl = window.location.pathname;
@@ -181,58 +146,72 @@ export async function processStyleSheets(fullContent) {
             const { address, chain } = parseWttpUrl(wttpUrl);
 
             // Construct the path for the CSS file
-            const cssPath = href;
-            console.log(
-              "Fetching CSS from WTTP site:",
-              address,
-              "path:",
-              cssPath
-            );
+            fetchPath = href;
+            fetchAddress = address;
+            fetchChain = chain;
 
-            const result = await fetchWTTPResource({
-              siteAddress: address,
-              path: cssPath,
-              network: chain,
-            });
-
-            if (
-              result.response.head.status === 200n ||
-              result.response.head.status === 206n
-            ) {
-              if (result.content) {
-                const mimeType =
-                  result.response.head.metadata.properties.mimeType;
-                const content = decodeContent(result.content, mimeType);
-                console.log("CSS response MIME type:", mimeType);
-                console.log("CSS content length:", result.content.length);
-
-                // Process any embedded URLs in the CSS content
-                const cssContent =
-                  typeof content === "string"
-                    ? content
-                    : new TextDecoder().decode(result.content);
-                const processedContent = await processCssUrls(
-                  cssContent,
-                  address,
-                  chain
-                );
-                styleTag.innerHTML = processedContent;
-
-                document.head.appendChild(styleTag);
-                console.log("Successfully added style tag for:", href);
-                // Remove the original link tag from fullContent
-                fullContent = fullContent.replace(styleSheet, "");
-              }
-            } else {
-              console.warn(
-                `Failed to fetch CSS file ${href}: ${result.response.head.status} - Resource not found`
-              );
-              // Remove the original link tag even if fetch failed to prevent browser from trying to load it
-              fullContent = fullContent.replace(styleSheet, "");
-            }
+            // Process any embedded URLs in the CSS content
           } catch (error) {
             console.warn(`Failed to process CSS file ${href}:`, error);
             // Remove the original link tag even if processing failed to prevent browser from trying to load it
+            fullContent = fullContent.replace(styleSheet, "");
+          }
+        }
+
+        try {
+          result = await fetchWTTPResource({
+            siteAddress: fetchAddress,
+            path: fetchPath,
+            network: fetchChain,
+          });
+        } catch (error) {
+          console.warn(`Failed to fetch stylesheet ${href}:`, error);
+        }
+
+        // Shared post-fetch processing for both branches
+        if (result) {
+          if (
+            result.response.head.status === 200n ||
+            result.response.head.status === 206n
+          ) {
+            if (result.content) {
+              const mimeType =
+                result.response.head.metadata.properties.mimeType;
+              const content = decodeContent(result.content, mimeType);
+              console.log("CSS response MIME type:", mimeType);
+              console.log("CSS content length:", result.content.length);
+
+              // Style sheets linked without the .css extension don't work
+              // so we need to add the contents in a style tag
+
+              // Process any embedded URLs in the CSS content
+              const cssContent =
+                typeof content === "string"
+                  ? content
+                  : new TextDecoder().decode(result.content);
+              const processedContent = await processCssUrls(
+                cssContent,
+                fetchAddress,
+                fetchChain
+              );
+              styleTag.innerHTML = processedContent;
+
+              // Style sheets linked without the .css extension don't work
+              // so we need to add the contents in a style tag
+
+              try {
+                document.head.appendChild(styleTag);
+              } catch (error) {
+                console.warn("Failed to append style tag for:", href, error);
+              }
+              // Remove the original link tag from fullContent
+              fullContent = fullContent.replace(styleSheet, "");
+            }
+          } else {
+            console.warn(
+              `Failed to fetch CSS file ${href}: ${result.response.head.status} - Resource not found`
+            );
+            // Remove the original link tag even if fetch failed to prevent browser from trying to load it
             fullContent = fullContent.replace(styleSheet, "");
           }
         }
@@ -257,163 +236,25 @@ export async function processScripts(fullContent) {
         // Check if the original script tag has type="module"
         const isModule =
           script.includes('type="module"') || script.includes("type='module'");
-        if (scriptSrc.startsWith("wttp://")) {
-          console.log("Processing wttp script:", scriptSrc);
-          const { address, chain, path } = parseWttpUrl(scriptSrc);
-
-          try {
-            const result = await fetchWTTPResource({
-              siteAddress: address,
-              path: path,
-              network: chain,
-            });
-
-            if (
-              result.response.head.status === 200n ||
-              result.response.head.status === 206n
-            ) {
-              if (result.content) {
-                const mimeType =
-                  result.response.head.metadata.properties.mimeType;
-                const content = decodeContent(result.content, mimeType);
-                const scriptTag = document.createElement("script");
-
-                let scriptContent =
-                  typeof content === "string"
-                    ? content
-                    : new TextDecoder().decode(result.content);
-
-                // Validate script content before processing
-                if (!scriptContent || scriptContent.trim() === "") {
-                  console.warn("Empty script content, skipping:", scriptSrc);
-                  fullContent = fullContent.replace(script, "");
-                  continue;
-                }
-
-                // Additional integrity check for large scripts
-                if (scriptContent.length > 50000) {
-                  console.log(
-                    "Large script detected, performing integrity check..."
-                  );
-
-                  // Check if this is an ES module - if so, skip Function validation as it doesn't support module syntax
-                  const isESModule =
-                    scriptContent.includes("import.meta") ||
-                    scriptContent.includes("import ") ||
-                    scriptContent.includes("export ");
-
-                  if (!isESModule) {
-                    // Only validate non-module scripts with Function constructor
-                    try {
-                      new Function(scriptContent);
-                      console.log("Large script passed integrity check");
-                    } catch (syntaxError) {
-                      console.warn(
-                        "Syntax error in large script, attempting recovery..."
-                      );
-                      console.warn("Syntax error:", syntaxError.message);
-
-                      // Try re-decoding from raw bytes with explicit UTF-8
-                      try {
-                        const redecodedContent = new TextDecoder("utf-8", {
-                          fatal: true,
-                        }).decode(result.content);
-                        new Function(redecodedContent);
-                        console.log("Successfully re-decoded script content");
-                        // Replace the problematic content with the corrected version
-                        scriptContent = redecodedContent;
-                      } catch (retryError) {
-                        console.error(
-                          "Failed to recover script content:",
-                          retryError
-                        );
-                        fullContent = fullContent.replace(script, "");
-                        continue;
-                      }
-                    }
-                  } else {
-                    console.log(
-                      "ES module detected, skipping Function validation"
-                    );
-                  }
-                }
-
-                // For large modules or when original had src, use blob URL instead of innerHTML
-                if (
-                  isModule ||
-                  scriptContent.length > 50000 ||
-                  scriptContent.includes("import.meta") ||
-                  scriptContent.includes("import ") ||
-                  scriptContent.includes("export ")
-                ) {
-                  // Create a blob URL for the script content
-                  const blob = new Blob([scriptContent], {
-                    type: "application/javascript",
-                  });
-                  const blobUrl = URL.createObjectURL(blob);
-                  scriptTag.src = blobUrl;
-                  scriptTag.type = "module";
-
-                  console.log(
-                    "Created blob URL for large/module script:",
-                    scriptSrc,
-                    "Size:",
-                    scriptContent.length
-                  );
-                } else {
-                  // Small, non-module scripts can use innerHTML
-                  try {
-                    scriptTag.innerHTML = scriptContent;
-                  } catch (error) {
-                    console.warn(
-                      "Failed to set script innerHTML for:",
-                      scriptSrc,
-                      error
-                    );
-                    console.warn(
-                      "Problematic content preview:",
-                      scriptContent.substring(0, 200)
-                    );
-                    fullContent = fullContent.replace(script, "");
-                    continue;
-                  }
-                }
-
-                try {
-                  document.head.appendChild(scriptTag);
-                  console.log("Successfully added script tag for:", scriptSrc);
-                } catch (error) {
-                  console.warn(
-                    "Failed to append script tag for:",
-                    scriptSrc,
-                    error
-                  );
-                  console.warn(
-                    "Script content preview:",
-                    scriptTag.innerHTML
-                      ? scriptTag.innerHTML.substring(0, 200)
-                      : "no content"
-                  );
-                  fullContent = fullContent.replace(script, "");
-                  continue;
-                }
-                // Delete found script tag from fullContent
-                fullContent = fullContent.replace(script, "");
-              }
-            }
-          } catch (error) {
-            console.warn(`Failed to fetch script ${scriptSrc}:`, error);
-          }
-        } else if (
+        if (
           !scriptSrc.startsWith("http://") &&
           !scriptSrc.startsWith("https://") &&
           !scriptSrc.startsWith("//")
         ) {
-          // Handle relative URLs and any non-absolute URLs
-          // These should be fetched from the same WTTP source as the main page
-          console.log("Processing relative JS file:", scriptSrc);
-          try {
-            // Get the current WTTP URL from the page
+          let fetchAddress;
+          let fetchChain;
+          let fetchPath;
+
+          if (scriptSrc.startsWith("wttp://")) {
+            console.log("Processing wttp script:", scriptSrc);
+            const { address, chain, path } = parseWttpUrl(scriptSrc);
+            fetchAddress = address;
+            fetchChain = chain;
+            fetchPath = path;
+          } else {
+            // Handle relative URLs and any non-absolute URLs
+            // These should be fetched from the same WTTP source as the main page
+            console.log("Processing relative JS file:", scriptSrc);
             const currentUrl = window.location.pathname;
             let wttpUrl = currentUrl;
 
@@ -426,30 +267,18 @@ export async function processScripts(fullContent) {
             }
 
             const { address, chain } = parseWttpUrl(wttpUrl);
-            const chainString = ":" + chain;
 
             // Construct the path for the JS file
-            const jsPath = scriptSrc;
+            fetchPath = scriptSrc;
+            fetchAddress = address;
+            fetchChain = chain;
+          }
 
-            // Use cached address resolution to avoid CSP issues
-            let resolvedAddress;
-            try {
-              resolvedAddress = await getContractAddress(address);
-              console.log(
-                "Fetching JS from WTTP site:",
-                resolvedAddress,
-                "path:",
-                jsPath
-              );
-            } catch (error) {
-              console.error(`Failed to resolve address ${address}:`, error);
-              continue; // Skip this script
-            }
-
+          try {
             const result = await fetchWTTPResource({
-              siteAddress: resolvedAddress,
-              path: jsPath,
-              network: chain,
+              siteAddress: fetchAddress,
+              path: fetchPath,
+              network: fetchChain,
             });
 
             if (
@@ -706,7 +535,7 @@ export async function processImages() {
         const result = await fetchWTTPResource({
           siteAddress: address,
           path: path,
-          chainId: chain,
+          network: chain,
         });
 
         if (
@@ -759,30 +588,14 @@ export async function processImages() {
         }
 
         const { address, chain } = parseWttpUrl(wttpUrl);
-        const chainString = ":" + chain;
 
         // Construct the path for the image file
         const imagePath = imageSrc;
 
-        // Use cached address resolution to avoid CSP issues
-        let resolvedAddress;
-        try {
-          resolvedAddress = await getContractAddress(address);
-          console.log(
-            "Fetching image from WTTP site:",
-            resolvedAddress,
-            "path:",
-            imagePath
-          );
-        } catch (error) {
-          console.error(`Failed to resolve address ${address}:`, error);
-          continue; // Skip this image
-        }
-
         const result = await fetchWTTPResource({
-          siteAddress: resolvedAddress,
+          siteAddress: address,
           path: imagePath,
-          chainId: chain,
+          network: chain,
         });
 
         if (
