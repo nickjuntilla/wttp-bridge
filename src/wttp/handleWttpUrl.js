@@ -133,7 +133,7 @@ export async function handleWTTPURL() {
   // }
 
   // Set the body opacity to zero so we can wait for the images
-  document.body.style.opacity = 0;
+  document.body.style.opacity = 50;
 
   // Process stylesheets first to prevent browser from loading original CSS links
   console.log("Processing stylesheets...");
@@ -154,7 +154,7 @@ export async function handleWTTPURL() {
   setTimeout(() => {
     console.log("Processing scripts...");
     processScripts(fullContent);
-  }, 2000);
+  }, 1000);
 }
 
 function extractNonStylesheetTags(content, regex) {
