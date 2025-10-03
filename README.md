@@ -1,6 +1,6 @@
-# Web2 to Web3 (WTTP) Gateway
+# Web2 to Web3 (WTTP) Bridge
 
-WTTP Gateway redirects WTTP requests through an embedded RPC in the browser. Query contract addresses after wttp.
+WTTP Bridge redirects WTTP requests through an embedded RPC in the browser. Query contract addresses after wttp.
 The server must be configured to send all requests back to index.html like a single page app.
 
 ## To run
@@ -19,15 +19,14 @@ To serve a single domain route a domain to a single contract address.
 
 ### Examples
 
-- http://localhost:5000/wttp/0x9C29F0eE3D59dFea70D616f4776F7649dA364342
-- http://localhost:5000/wttp/0x61ba60374e0CF9a51aD846853b08B09FC163896a
-- http://localhost:5000/wttp/0xaD7A50341F4Cc6C792fAc35D3e6A67eA1750EDBc
+- http://localhost:5000/wttp/0xdDFAfc6013C9c17f421Ef0054691D62e0A28688C
+- http://localhost:5000/wttp/0xD8B79a32dCb6a2a5370069e97aE46cEb4a49D331
 
 ## To serve a single web2 domain
 
 Step 1: set SINGLE_CONTRACT in .env to your contract
 
-Step 2: deploy the WTTP-GATE way to a static host
+Step 2: deploy the WTTP-Bridge way to a static host
 
 Step 3: set your DNS to point your static host
 
